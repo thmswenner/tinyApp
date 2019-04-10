@@ -20,9 +20,10 @@ app.get("/urls", (request, response) => {
 });
 
 app.get('/urls/:shortURL', (request, response) => {
-  let templateVars = {shortURL: request.params.shortURL, longURL: urlDatabase };
+  let templateVars = {shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL] };
   response.render('urls_show', templateVars)
 });
+
 
 app.get('/hello', (request, response) => {
   response.send('<html><h1>Hello World</h1></html>\n')
