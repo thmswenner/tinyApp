@@ -13,12 +13,17 @@
 
 <body style="font-size:20px; padding:50px;">
   <% include partials/_header.ejs %>
-  <ul>
-     <h3>My URL For: <%= longURL %></h3>
-     <p><%= shortURL %></p>
 
-  </ul>
 
+  <h4><%= shortURL %></h4>
+  <p>My URL For: <%= longURL %></p>
+
+    <form class="form-inline" action="/urls/<%= shortURL %>" method="POST">
+      <div class="form-group mb-2">
+        <input class="form-control" type="text" name="longURL" placeholder= '<%= longURL %>' style="width: 300px;">
+        <button style="margin-left: 10px" type="submit" class="btn btn-primary">Update</button>
+      </div>
+    </form>
 
 </body>
 </html>
