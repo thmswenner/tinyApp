@@ -18,7 +18,7 @@ app.get("/", (request, response) => {
 });
 
 app.get("/urls", (request, response) => {
-  let templateVars = {urls: urlDatabase}
+  const templateVars = {urls: urlDatabase}
   response.render('urls_index', templateVars);
 });
 
@@ -27,7 +27,7 @@ app.get('/urls/new', (request, response) => {
 });
 
 app.get('/urls/:shortURL', (request, response) => {
-  let templateVars = {shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL] };
+  const templateVars = {shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL] };
   response.render('urls_show', templateVars)
 });
 
@@ -37,13 +37,14 @@ app.get('/hello', (request, response) => {
 })
 
 app.post('/urls', (request,response) => {
-  console.log(request.body);
-  response.send('ok');
+  const shortURL = generateRandomString()
+  urlDatabase[shortURL] = request.body.longURL
+  response.redirect(`/urls/${shortURL}`)
 })
 
 const generateRandomString = () => {
-  var randomStr = "";
-  var letters ="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  let randomStr = "";
+  const letters ="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
   for (var i = 0; i < 6; i++)
     randomStr += letters.charAt(Math.floor(Math.random() * letters.length));
