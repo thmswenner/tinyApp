@@ -3,9 +3,30 @@
 
 </head>
 
-<body>
-  <h1>TinyApp</h1>
-  <a href=""><p>Create a New TinyURL</p></a>
-</body>
+  <body>
+    <h1>TinyApp</h1>
+    <a href="/urls/new"><p>Create a New TinyURL</p></a>
 
+      <% if (username) { %>
+
+        <form class="form-inline" action="/logout" method="POST">
+          <div class="form-group mb-2">
+            <p><%= username %><p>
+            <button type="submit" class="btn btn-primary" style="margin-left: 10px">logout</button>
+          </div>
+        </form>
+
+      <% } else { %>
+
+      <form class="form-inline" action="/login" method="POST">
+        <div class="form-group mb-2">
+          <input class="form-control" type="text" name="username" placeholder="username" style="width: 300px;">
+          <button type="submit" class="btn btn-primary" style="margin-left: 10px">Submit</button>
+        </div>
+      </form>
+
+      <% } %>
+
+
+  </body>
 </html>
