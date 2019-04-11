@@ -7,12 +7,12 @@
     <h1>Welcome to TinyApp</h1>
     <a href="/urls/new"><p>Create a New TinyURL</p></a>
 
-      <% if (username) { %>
+      <% if (user) { %>
 
 
         <form class="form-inline" action="/logout" method="POST">
           <div class="form-group mb-2">
-            <p><%= username %><p>
+            <p><%= user.email %><p>
             <button type="submit" class="btn btn-primary" style="margin-left: 10px">logout</button>
           </div>
         </form>

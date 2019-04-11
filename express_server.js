@@ -38,7 +38,7 @@ const users = {
 //Registration
 app.get('/urls/register', (req, resp) => {
   const templateVars = {
-    username: req.cookies["username"]
+    user: req.cookies["user"]
   }
   resp.render('register', templateVars)
 })
@@ -50,17 +50,16 @@ app.post('/register', (req, resp) => {
   const userId = generateRandomString()
   if(req.body.email === '' || req.body.password === '') {
     resp.sendStatus(400)
-  } else if (req.body.email === findEmail(users)) {
+  } else if (findEmail(req.body.email)) {
     resp.sendStatus(400)
   } else {
     users[userId] = {
       id: userId,
       email: req.body.email,
       password: req.body.password
-  }
-  console.log(users)
-  resp.cookie('username', userId)
-  resp.redirect('/urls')
+    }
+    resp.cookie('user', users[userId])
+    resp.redirect('/urls')
   }
 })
 
@@ -76,7 +75,7 @@ app.post('/login', (req, resp) => {
 
 //Logout
 app.post('/logout', (req, resp) => {
-  resp.clearCookie('username')
+  resp.clearCookie('user')
   resp.redirect('/urls')
 })
 
@@ -86,7 +85,7 @@ app.post('/logout', (req, resp) => {
 app.get('/urls', (req, resp) => {
   const templateVars = {
     urls: urlDatabase,
-    username: req.cookies["username"]
+    user: req.cookies["user"]
   }
   resp.render('urls_index', templateVars)
 })
@@ -96,7 +95,7 @@ app.get('/urls', (req, resp) => {
 //Serves create new page
 app.get('/urls/new', (req, resp) => {
   const templateVars = {
-    username: req.cookies["username"]
+    user: req.cookies["user"]
   }
   resp.render('urls_new', templateVars);
 })
@@ -108,7 +107,7 @@ app.get('/urls/:shortURL', (req, resp) => {
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
-    username: req.cookies["username"]
+    user: req.cookies["user"]
   }
   resp.render('urls_show', templateVars);
 })
@@ -146,9 +145,7 @@ app.get('/urls/:shortURL', (req, resp) => {
 
 
 
-
-
-//******  HELPER FUNCTIONS HERE  ******//
+//******  HELPER FUNCTIONS HERE  //
 
 //Function to create a random 6 digit string
 const generateRandomString = () => {
@@ -165,12 +162,10 @@ generateRandomString()
 
 
 //Function to iterate through database object
-const findEmail = (obj) => {
-  let value = ''
-  Object.keys(obj).forEach(key => {
-    value = obj[key].email;
+const findEmail = (email) => {
+  return Object.values(users).some(user => {
+    return user.email === email;
   })
-  return value
 }
 
 
