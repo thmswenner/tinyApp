@@ -12,10 +12,59 @@ app.set('view engine', 'ejs')
 app.use(bodyParser.urlencoded({extended: true}))
 
 
+
+//Databases
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 }
+
+
+
+const users = {
+  "userRandomID": {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk"
+  }
+}
+
+
+//Registration
+app.get('/urls/register', (req, resp) => {
+  const templateVars = {
+    username: req.cookies["username"]
+  }
+  resp.render('register', templateVars)
+})
+
+
+
+//Creating new user object
+app.post('/register', (req, resp) => {
+  const userId = generateRandomString()
+  if(req.body.email === '' || req.body.password === '') {
+    resp.sendStatus(400)
+  } else if (req.body.email === findEmail(users)) {
+    resp.sendStatus(400)
+  } else {
+    users[userId] = {
+      id: userId,
+      email: req.body.email,
+      password: req.body.password
+  }
+  console.log(users)
+  resp.cookie('username', userId)
+  resp.redirect('/urls')
+  }
+})
+
+
 
 //Login
 app.post('/login', (req, resp) => {
@@ -23,15 +72,18 @@ app.post('/login', (req, resp) => {
   resp.redirect('/urls')
 })
 
+
+
 //Logout
 app.post('/logout', (req, resp) => {
-  console.log('Are you getting called?')
   resp.clearCookie('username')
   resp.redirect('/urls')
 })
 
+
+
 //Serves Homepage
-app.get("/urls", (req, resp) => {
+app.get('/urls', (req, resp) => {
   const templateVars = {
     urls: urlDatabase,
     username: req.cookies["username"]
@@ -39,7 +91,9 @@ app.get("/urls", (req, resp) => {
   resp.render('urls_index', templateVars)
 })
 
-//serves create new page
+
+
+//Serves create new page
 app.get('/urls/new', (req, resp) => {
   const templateVars = {
     username: req.cookies["username"]
@@ -47,7 +101,9 @@ app.get('/urls/new', (req, resp) => {
   resp.render('urls_new', templateVars);
 })
 
-//serves shortURL page
+
+
+//Serves shortURL page
 app.get('/urls/:shortURL', (req, resp) => {
   const templateVars = {
     shortURL: req.params.shortURL,
@@ -57,11 +113,15 @@ app.get('/urls/:shortURL', (req, resp) => {
   resp.render('urls_show', templateVars);
 })
 
+
+
 //Delets URL
 app.post('/urls/:shortURL/delete', (req, resp) => {
   delete urlDatabase[req.params.shortURL]
   resp.redirect('/urls')
 })
+
+
 
 //Adds random key to longURL
 app.post('/urls', (req,resp) => {
@@ -70,18 +130,25 @@ app.post('/urls', (req,resp) => {
   resp.redirect(`/urls/${shortURL}`)
 })
 
+
+
 //Updates urlDatabase
 app.post('/urls/:shortURL', (req, resp) => {
-  console.log('Im Here')
   urlDatabase[req.params.shortURL] = req.body.longURL
   resp.redirect(`/urls/${req.params.shortURL}`)
 })
+
+
 
 app.get('/urls/:shortURL', (req, resp) => {
   resp.redirect(`/urls/${shortURL}`)
 })
 
 
+
+
+
+//******  HELPER FUNCTIONS HERE  ******//
 
 //Function to create a random 6 digit string
 const generateRandomString = () => {
@@ -95,6 +162,17 @@ const generateRandomString = () => {
 }
 
 generateRandomString()
+
+
+//Function to iterate through database object
+const findEmail = (obj) => {
+  let value = ''
+  Object.keys(obj).forEach(key => {
+    value = obj[key].email;
+  })
+  return value
+}
+
 
 
 //listens for whatever the PORT is

@@ -11,7 +11,7 @@
 
 </head>
 
-<body style="font-size:20px; padding:50px;">
+<body style="font-size:16px; padding:50px;">
   <%= username %>
   <% include partials/_header.ejs %>
 
@@ -20,10 +20,15 @@
   <p>My URL For: <%= longURL %></p>
 
     <form class="form-inline" action="/urls/<%= shortURL %>" method="POST">
+
       <div class="form-group mb-2">
+
         <input class="form-control" type="text" name="longURL" placeholder= '<%= longURL %>' style="width: 300px;">
+
         <button style="margin-left: 10px" type="submit" class="btn btn-primary">Update</button>
+
       </div>
+
     </form>
 
 </body>
