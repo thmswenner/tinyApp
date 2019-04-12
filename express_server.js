@@ -37,8 +37,12 @@ const users = {
 
 //Registration
 app.get('/urls/register', (req, resp) => {
+  let email = ''
+  if (users[req.cookies.user]) {
+    email = users[req.cookies.user].email
+  }
   const templateVars = {
-    user: req.cookies["user"]
+    email: email
   }
   resp.render('register', templateVars)
 })
@@ -58,7 +62,7 @@ app.post('/register', (req, resp) => {
       email: req.body.email,
       password: req.body.password
     }
-    resp.cookie('user', users[userId])
+    resp.cookie('user', userId)
     resp.redirect('/urls')
   }
 })
@@ -66,11 +70,29 @@ app.post('/register', (req, resp) => {
 
 
 //Login
-app.post('/login', (req, resp) => {
-  resp.cookie('username', req.body.username)
-  resp.redirect('/urls')
+app.get('/urls/login', (req, resp) => {
+    let email = ''
+  if (users[req.cookies.user]) {
+    email = users[req.cookies.user].email
+  }
+  const templateVars = {
+    email: email
+  }
+  resp.render('login', templateVars)
 })
 
+app.post('/login', (req, resp) => {
+  if (!findEmail(req.body.email)) {
+    resp.sendStatus(403)
+  } else if (findEmail(req.body.email) && !findPassword(req.body.password)) {
+    resp.sendStatus(403)
+  } else {
+    const id = Object.keys(users).find(key => users[key].email === req.body.email);
+    console.log(id)
+    resp.cookie('user', id)
+    resp.redirect('/urls')
+  }
+})
 
 
 //Logout
@@ -83,9 +105,13 @@ app.post('/logout', (req, resp) => {
 
 //Serves Homepage
 app.get('/urls', (req, resp) => {
+  let email = ''
+  if (users[req.cookies.user]) {
+    email = users[req.cookies.user].email
+  }
   const templateVars = {
     urls: urlDatabase,
-    user: req.cookies["user"]
+    email: email
   }
   resp.render('urls_index', templateVars)
 })
@@ -94,8 +120,13 @@ app.get('/urls', (req, resp) => {
 
 //Serves create new page
 app.get('/urls/new', (req, resp) => {
+  let email = ''
+  if (users[req.cookies.user]) {
+    email = users[req.cookies.user].email
+  }
   const templateVars = {
-    user: req.cookies["user"]
+    urls: urlDatabase,
+    email: email
   }
   resp.render('urls_new', templateVars);
 })
@@ -104,10 +135,14 @@ app.get('/urls/new', (req, resp) => {
 
 //Serves shortURL page
 app.get('/urls/:shortURL', (req, resp) => {
+    const email = ''
+  if (users[req.cookies.user]) {
+    email = users[req.cookies.user].email
+  }
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
-    user: req.cookies["user"]
+    email: email
   }
   resp.render('urls_show', templateVars);
 })
@@ -164,7 +199,13 @@ generateRandomString()
 //Function to iterate through database object
 const findEmail = (email) => {
   return Object.values(users).some(user => {
-    return user.email === email;
+    return user.email === email
+  })
+}
+
+const findPassword = (password) => {
+  return Object.values(users).some(user => {
+    return user.password === password;
   })
 }
 
