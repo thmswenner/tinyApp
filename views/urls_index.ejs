@@ -20,23 +20,13 @@
     <% for (var element in urls) { %>
 
       <div style="margin-bottom:10px; padding:20px; background-color:#f0f0f0">
-
-        <p style="margin-bottom:5px;">
-          <strong><%= element %>:</strong> <%= urls[element]%>
-        </p>
-
+        <p style="margin-bottom:5px;"> <strong><%= element %>:</strong> <%= urls[element].longURL %> </p>
         <form style="display: inline-block;" method="GET" action='/urls/<%= element %>/'>
-
           <button type="submit" class="btn btn-primary">Edit</button>
-
         </form>
-
         <form style="display: inline-block;" method="POST" action='/urls/<%= element %>/delete'>
-
-            <button type="submit" class="btn btn-primary">Delete</button>
-
-          </form>
-
+          <button type="submit" class="btn btn-primary">Delete</button>
+        </form>
       </div>
 
   <% } %>
