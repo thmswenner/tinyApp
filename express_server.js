@@ -16,7 +16,7 @@ app.use(bodyParser.urlencoded({extended: true}))
 //*** URL DATABASE ***//
 
 const urlDatabase = {
-  'b2xVn2': { longURL: "http://www.lighthouselabs.ca", userID: 'aaaddd'},
+  'b2xVn2': { longURL: "http://www.lighthouselabs.ca", userID: 'aaaaa'},
   '9sm5xK': { longURL: "http://www.google.com", userID: 'aaaccc'}
 }
 
@@ -25,10 +25,10 @@ const urlDatabase = {
 //*** USER DATABASE ***//
 
 const users = {
-  "userRandomID": {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur"
+  "aaaaa": {
+    id: "aaaaa",
+    email: "thmswenner@gmail.com",
+    password: "qwerty."
   },
  "user2RandomID": {
     id: "user2RandomID",
@@ -75,7 +75,8 @@ app.post('/register', (req, resp) => {
 
 
 
-//Login
+//*** USER LOGIN ***//
+
 app.get('/urls/login', (req, resp) => {
     let email = ''
   if (users[req.cookies.user]) {
@@ -101,7 +102,8 @@ app.post('/login', (req, resp) => {
 })
 
 
-//Logout
+//*** USER LOGOUT ***//
+
 app.post('/logout', (req, resp) => {
   resp.clearCookie('user')
   resp.redirect('/urls')
@@ -109,14 +111,15 @@ app.post('/logout', (req, resp) => {
 
 
 
-//Serves Homepage
+//*** HOMEPAGE ***//
+
 app.get('/urls', (req, resp) => {
   let email = ''
   if (users[req.cookies.user]) {
     email = users[req.cookies.user].email
   }
   const templateVars = {
-    urls: urlDatabase,
+    urls: urlsForUser(req.cookies.user, urlDatabase),
     email: email
   }
   resp.render('urls_index', templateVars)
@@ -124,7 +127,8 @@ app.get('/urls', (req, resp) => {
 
 
 
-//Serves create new page
+//*** CREATE NEW SHORTURL PAGE ***//
+
 app.get('/urls/new', (req, resp) => {
   let email = ''
   if (users[req.cookies.user]) {
@@ -139,7 +143,8 @@ app.get('/urls/new', (req, resp) => {
 
 
 
-//Serves shortURL page
+//*** SHORTURL PAGE ***//
+
 app.get('/urls/:shortURL', (req, resp) => {
     let email = ''
   if (users[req.cookies.user]) {
@@ -158,7 +163,11 @@ app.get('/urls/:shortURL', (req, resp) => {
 //*** DELETES THE URL ***//
 
 app.post('/urls/:shortURL/delete', (req, resp) => {
+  const id = req.cookies.user
+  const url = urlDatabase[req.params.shortURL]
+  if (id === url.userID){
   delete urlDatabase[req.params.shortURL]
+  }
   resp.redirect('/urls')
 })
 
@@ -169,8 +178,6 @@ app.post('/urls/:shortURL/delete', (req, resp) => {
 app.post('/urls', (req,resp) => {
   const shortURL = generateRandomString()
   urlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.cookies.user}
-  // urlDatabase[shortURL] = req.body.longURL
-  console.log(urlDatabase)
   resp.redirect(`/urls/${shortURL}`)
 })
 
@@ -179,8 +186,10 @@ app.post('/urls', (req,resp) => {
 //*** UPDATES URL DATABASE ***//
 
 app.post('/urls/:shortURL', (req, resp) => {
+  const id = req.cookies.user
+  const url = urlDatabase[req.params.shortURL]
+
   urlDatabase[req.params.shortURL] = { longURL: req.body.longURL, userID: req.cookies.user}
-  console.log(urlDatabase)
   resp.redirect(`/urls/${req.params.shortURL}`)
 })
 
@@ -192,7 +201,7 @@ app.get('/urls/:shortURL', (req, resp) => {
 
 
 
-//******  HELPER FUNCTIONS HERE  //
+//******  HELPER FUNCTIONS HERE  ******//
 
 //Function to create a random 6 digit string
 const generateRandomString = () => {
@@ -205,20 +214,29 @@ const generateRandomString = () => {
   return randomStr
 }
 
-generateRandomString()
 
 
 //Function to iterate through database object
-const findEmail = (email) => {
+const findEmail = email => {
   return Object.values(users).some(user => {
     return user.email === email
   })
 }
 
-const findPassword = (password) => {
+const findPassword = password => {
   return Object.values(users).some(user => {
     return user.password === password;
   })
+}
+
+
+const urlsForUser = (cookie, database) => {
+  let matches = {}
+  for (var shortURL in database) {
+    if (database[shortURL].userID === cookie)
+    matches[shortURL] = database[shortURL]
+  }
+  return matches
 }
 
 

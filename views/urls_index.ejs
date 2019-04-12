@@ -14,23 +14,33 @@
   <body style="font-size:16px; padding:50px;">
     <% include partials/_header %>
 
-    <h3>My URLs</h3>
+    <h3 style="margin-top: 25px">My URLs</h3>
+
+    <% if (email) { %>
+      <% for (var element in urls) { %>
 
 
-    <% for (var element in urls) { %>
-
-      <div style="margin-bottom:10px; padding:20px; background-color:#f0f0f0">
-        <p style="margin-bottom:5px;"> <strong><%= element %>:</strong> <%= urls[element].longURL %> </p>
-        <form style="display: inline-block;" method="GET" action='/urls/<%= element %>/'>
-          <button type="submit" class="btn btn-primary">Edit</button>
-        </form>
-        <form style="display: inline-block;" method="POST" action='/urls/<%= element %>/delete'>
-          <button type="submit" class="btn btn-primary">Delete</button>
-        </form>
-      </div>
-
-  <% } %>
+        <div style="margin-bottom:10px; padding:20px; background-color:#f0f0f0">
+          <p style="margin-bottom:5px;"> <strong><%= element %>:</strong> <%= urls[element].longURL %> </p>
+          <form style="display: inline-block;" method="GET" action='/urls/<%= element %>/'>
+            <button type="submit" class="btn btn-primary">Edit</button>
+          </form>
+          <form style="display: inline-block;" method="POST" action='/urls/<%= element %>/delete'>
+            <button type="submit" class="btn btn-primary">Delete</button>
+          </form>
+        </div>
 
 
+
+      <% } %>
+    <% } else { %>
+
+
+
+      <h1>Login You Idiot!</h1>
+
+
+
+    <% } %>
   </body>
 </html>
