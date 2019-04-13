@@ -3,15 +3,21 @@ const app = express()
 const morgan = require('morgan')
 const PORT = 8080 // default port 8080
 const bodyParser = require("body-parser")
-const cookieParser = require('cookie-parser')
 const bcrypt = require('bcrypt');
+const cookieSession = require('cookie-session')
 
 
 
-app.use(cookieParser())
 app.use(morgan('dev'))
 app.set('view engine', 'ejs')
 app.use(bodyParser.urlencoded({extended: true}))
+app.use(cookieSession({
+  name: 'session',
+  keys: ['wasssuupp'],
+
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}))
 
 
 
@@ -45,8 +51,8 @@ const users = {
 
 app.get('/urls/register', (req, resp) => {
   let email = ''
-  if (users[req.cookies.user]) {
-    email = users[req.cookies.user].email
+  if (users[req.session.user_id]) {
+    email = users[req.session.user_id].email
   }
   const templateVars = {
     email: email
@@ -70,10 +76,9 @@ app.post('/register', (req, resp) => {
       email: req.body.email,
       password: bcrypt.hashSync(req.body.password, 10)
     }
-    resp.cookie('user', userId)
+    req.session.user_id = userId
     resp.redirect('/urls')
   }
-  console.log(users)
 })
 
 
@@ -82,8 +87,8 @@ app.post('/register', (req, resp) => {
 
 app.get('/urls/login', (req, resp) => {
   let email = ''
-  if (users[req.cookies.user]) {
-    email = users[req.cookies.user].email
+  if (users[req.session.user_id]) {
+    email = users[req.session.user_id].email
   }
   const templateVars = {
     email: email
@@ -101,7 +106,7 @@ app.post('/login', (req, resp) => {
     resp.sendStatus(403)
   } else {
     const id = Object.keys(users).find(key => users[key].email === req.body.email);
-    resp.cookie('user', id)
+    req.session.user_id = id
     resp.redirect('/urls')
   }
 })
@@ -110,7 +115,7 @@ app.post('/login', (req, resp) => {
 //*** USER LOGOUT ***//
 
 app.post('/logout', (req, resp) => {
-  resp.clearCookie('user')
+  req.session = null
   resp.redirect('/urls')
 })
 
@@ -120,13 +125,14 @@ app.post('/logout', (req, resp) => {
 
 app.get('/urls', (req, resp) => {
   let email = ''
-  if (users[req.cookies.user]) {
-    email = users[req.cookies.user].email
+  if (users[req.session.user_id]) {
+    email = users[req.session.user_id].email
   }
   const templateVars = {
-    urls: urlsForUser(req.cookies.user, urlDatabase),
+    urls: urlsForUser(req.session.user_id, urlDatabase),
     email: email
   }
+  console.log(templateVars)
   resp.render('urls_index', templateVars)
 })
 
@@ -136,8 +142,8 @@ app.get('/urls', (req, resp) => {
 
 app.get('/urls/new', (req, resp) => {
   let email = ''
-  if (users[req.cookies.user]) {
-    email = users[req.cookies.user].email
+  if (users[req.session.user_id]) {
+    email = users[req.session.user_id].email
   }
   const templateVars = {
     urls: urlDatabase,
@@ -152,8 +158,8 @@ app.get('/urls/new', (req, resp) => {
 
 app.get('/urls/:shortURL', (req, resp) => {
     let email = ''
-  if (users[req.cookies.user]) {
-    email = users[req.cookies.user].email
+  if (users[req.session.user_id]) {
+    email = users[req.session.user_id].email
   }
   const templateVars = {
     shortURL: req.params.shortURL,
@@ -168,7 +174,7 @@ app.get('/urls/:shortURL', (req, resp) => {
 //*** DELETES THE URL ***//
 
 app.post('/urls/:shortURL/delete', (req, resp) => {
-  const id = req.cookies.user
+  const id = req.session.user_id
   const url = urlDatabase[req.params.shortURL]
   if (id === url.userID){
   delete urlDatabase[req.params.shortURL]
@@ -182,7 +188,7 @@ app.post('/urls/:shortURL/delete', (req, resp) => {
 
 app.post('/urls', (req,resp) => {
   const shortURL = generateRandomString()
-  urlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.cookies.user}
+  urlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.session.user_id}
   resp.redirect(`/urls/${shortURL}`)
 })
 
@@ -191,10 +197,10 @@ app.post('/urls', (req,resp) => {
 //*** UPDATES URL DATABASE ***//
 
 app.post('/urls/:shortURL', (req, resp) => {
-  const id = req.cookies.user
+  const id = req.session.user_id
   const url = urlDatabase[req.params.shortURL]
   if (id === url.userID){
-  urlDatabase[req.params.shortURL] = { longURL: req.body.longURL, userID: req.cookies.user}
+  urlDatabase[req.params.shortURL] = { longURL: req.body.longURL, userID: req.session.user_id}
   }
   resp.redirect(`/urls/${req.params.shortURL}`)
 })
