@@ -3,85 +3,217 @@ const app = express()
 const morgan = require('morgan')
 const PORT = 8080 // default port 8080
 const bodyParser = require("body-parser")
-const cookieParser = require('cookie-parser')
+const bcrypt = require('bcrypt');
+const cookieSession = require('cookie-session')
 
 
-app.use(cookieParser())
+
 app.use(morgan('dev'))
 app.set('view engine', 'ejs')
 app.use(bodyParser.urlencoded({extended: true}))
+app.use(cookieSession({
+  name: 'session',
+  keys: ['wasssuupp'],
 
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}))
+
+
+
+//*** URL DATABASE ***//
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  'b2xVn2': { longURL: "http://www.lighthouselabs.ca", userID: 'aaaaa'},
+  '9sm5xK': { longURL: "http://www.google.com", userID: 'aaaccc'}
 }
 
-//Login
-app.post('/login', (req, resp) => {
-  resp.cookie('username', req.body.username)
-  resp.redirect('/urls')
-})
 
-//Logout
-app.post('/logout', (req, resp) => {
-  console.log('Are you getting called?')
-  resp.clearCookie('username')
-  resp.redirect('/urls')
-})
 
-//Serves Homepage
-app.get("/urls", (req, resp) => {
-  const templateVars = {
-    urls: urlDatabase,
-    username: req.cookies["username"]
+//*** USER DATABASE ***//
+
+const users = {
+  "aaaaa": {
+    id: "aaaaa",
+    email: "thmswenner@gmail.com",
+    password: "qwerty."
+  },
+ "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk"
   }
+}
+
+
+
+//*** REGISTRATION ***//
+
+app.get('/urls/register', (req, resp) => {
+  let email = ''
+  if (users[req.session.user_id]) {
+    email = users[req.session.user_id].email
+  }
+  const templateVars = {
+    email: email
+  }
+  resp.render('register', templateVars)
+})
+
+
+
+//*** CREATING NEW USER ***//
+
+app.post('/register', (req, resp) => {
+  const userId = generateRandomString()
+  if(req.body.email === '' || req.body.password === '') {
+    resp.sendStatus(400)
+  } else if (findEmail(req.body.email)) {
+    resp.sendStatus(400)
+  } else {
+    users[userId] = {
+      id: userId,
+      email: req.body.email,
+      password: bcrypt.hashSync(req.body.password, 10)
+    }
+    req.session.user_id = userId
+    resp.redirect('/urls')
+  }
+})
+
+
+
+//*** USER LOGIN ***//
+
+app.get('/urls/login', (req, resp) => {
+  let email = ''
+  if (users[req.session.user_id]) {
+    email = users[req.session.user_id].email
+  }
+  const templateVars = {
+    email: email
+  }
+  resp.render('login', templateVars)
+})
+
+
+//*** USER LOGIN ***//
+
+app.post('/login', (req, resp) => {
+  if (!findEmail(req.body.email)) {
+    resp.sendStatus(403)
+  } else if (!bcrypt.compareSync(req.body.password, emailMatch(req.body.email))) {
+    resp.sendStatus(403)
+  } else {
+    const id = Object.keys(users).find(key => users[key].email === req.body.email);
+    req.session.user_id = id
+    resp.redirect('/urls')
+  }
+})
+
+
+//*** USER LOGOUT ***//
+
+app.post('/logout', (req, resp) => {
+  req.session = null
+  resp.redirect('/urls')
+})
+
+
+
+//*** HOMEPAGE ***//
+
+app.get('/urls', (req, resp) => {
+  let email = ''
+  if (users[req.session.user_id]) {
+    email = users[req.session.user_id].email
+  }
+  const templateVars = {
+    urls: urlsForUser(req.session.user_id, urlDatabase),
+    email: email
+  }
+  console.log(templateVars)
   resp.render('urls_index', templateVars)
 })
 
-//serves create new page
+
+
+//*** CREATE NEW SHORTURL PAGE ***//
+
 app.get('/urls/new', (req, resp) => {
+  let email = ''
+  if (users[req.session.user_id]) {
+    email = users[req.session.user_id].email
+  }
   const templateVars = {
-    username: req.cookies["username"]
+    urls: urlDatabase,
+    email: email
   }
   resp.render('urls_new', templateVars);
 })
 
-//serves shortURL page
+
+
+//*** SHORTURL PAGE ***//
+
 app.get('/urls/:shortURL', (req, resp) => {
+    let email = ''
+  if (users[req.session.user_id]) {
+    email = users[req.session.user_id].email
+  }
   const templateVars = {
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
-    username: req.cookies["username"]
+    longURL: urlDatabase[req.params.shortURL].longURL,
+    email: email
   }
   resp.render('urls_show', templateVars);
 })
 
-//Delets URL
+
+
+//*** DELETES THE URL ***//
+
 app.post('/urls/:shortURL/delete', (req, resp) => {
+  const id = req.session.user_id
+  const url = urlDatabase[req.params.shortURL]
+  if (id === url.userID){
   delete urlDatabase[req.params.shortURL]
+  }
   resp.redirect('/urls')
 })
 
-//Adds random key to longURL
+
+
+//*** CREATES URL DATABASE OBJECT ***//
+
 app.post('/urls', (req,resp) => {
   const shortURL = generateRandomString()
-  urlDatabase[shortURL] = req.body.longURL
+  urlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.session.user_id}
   resp.redirect(`/urls/${shortURL}`)
 })
 
-//Updates urlDatabase
+
+
+//*** UPDATES URL DATABASE ***//
+
 app.post('/urls/:shortURL', (req, resp) => {
-  console.log('Im Here')
-  urlDatabase[req.params.shortURL] = req.body.longURL
+  const id = req.session.user_id
+  const url = urlDatabase[req.params.shortURL]
+  if (id === url.userID){
+  urlDatabase[req.params.shortURL] = { longURL: req.body.longURL, userID: req.session.user_id}
+  }
   resp.redirect(`/urls/${req.params.shortURL}`)
 })
+
+
 
 app.get('/urls/:shortURL', (req, resp) => {
   resp.redirect(`/urls/${shortURL}`)
 })
 
 
+
+//******  HELPER FUNCTIONS HERE  ******//
 
 //Function to create a random 6 digit string
 const generateRandomString = () => {
@@ -94,7 +226,38 @@ const generateRandomString = () => {
   return randomStr
 }
 
-generateRandomString()
+
+
+//Function to iterate through database object
+const findEmail = email => {
+  return Object.values(users).some(user => {
+    return user.email === email
+  })
+}
+
+const findPassword = password => {
+  return Object.values(users).some(user => {
+    return user.password === password;
+  })
+}
+
+
+const urlsForUser = (cookie, database) => {
+  let matches = {}
+  for (var shortURL in database) {
+    if (database[shortURL].userID === cookie)
+    matches[shortURL] = database[shortURL]
+  }
+  return matches
+}
+
+const emailMatch = email => {
+  for (var key in users) {
+    if (users[key].email === email) {
+      return users[key].password
+    }
+  }
+}
 
 
 //listens for whatever the PORT is
