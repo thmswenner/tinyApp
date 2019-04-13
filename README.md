@@ -2,9 +2,9 @@
 
 ## Final Product
 
-![]()
+![Registering](https://github.com/thmswenner/tinyApp/blob/master/docs/Register.png)
 ![Creating a Tiny URL](https://github.com/thmswenner/tinyApp/blob/master/docs/Create.png)
-![]()
+![Homepage after login]()
 
 ## Dependencies
 
