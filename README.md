@@ -4,7 +4,7 @@
 
 ![Registering](https://github.com/thmswenner/tinyApp/blob/master/docs/Register.png)
 ![Creating a Tiny URL](https://github.com/thmswenner/tinyApp/blob/master/docs/Create.png)
-![Homepage after login]()
+![Homepage after login](https://github.com/thmswenner/tinyApp/blob/master/docs/Login_Home.png)
 
 ## Dependencies
 
