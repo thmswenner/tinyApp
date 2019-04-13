@@ -4,6 +4,8 @@ const morgan = require('morgan')
 const PORT = 8080 // default port 8080
 const bodyParser = require("body-parser")
 const cookieParser = require('cookie-parser')
+const bcrypt = require('bcrypt');
+
 
 
 app.use(cookieParser())
@@ -54,7 +56,7 @@ app.get('/urls/register', (req, resp) => {
 
 
 
-//*** CREATING NEW USER OBJECT ***//
+//*** CREATING NEW USER ***//
 
 app.post('/register', (req, resp) => {
   const userId = generateRandomString()
@@ -66,11 +68,12 @@ app.post('/register', (req, resp) => {
     users[userId] = {
       id: userId,
       email: req.body.email,
-      password: req.body.password
+      password: bcrypt.hashSync(req.body.password, 10)
     }
     resp.cookie('user', userId)
     resp.redirect('/urls')
   }
+  console.log(users)
 })
 
 
@@ -78,7 +81,7 @@ app.post('/register', (req, resp) => {
 //*** USER LOGIN ***//
 
 app.get('/urls/login', (req, resp) => {
-    let email = ''
+  let email = ''
   if (users[req.cookies.user]) {
     email = users[req.cookies.user].email
   }
@@ -88,14 +91,16 @@ app.get('/urls/login', (req, resp) => {
   resp.render('login', templateVars)
 })
 
+
+//*** USER LOGIN ***//
+
 app.post('/login', (req, resp) => {
   if (!findEmail(req.body.email)) {
     resp.sendStatus(403)
-  } else if (findEmail(req.body.email) && !findPassword(req.body.password)) {
+  } else if (!bcrypt.compareSync(req.body.password, emailMatch(req.body.email))) {
     resp.sendStatus(403)
   } else {
     const id = Object.keys(users).find(key => users[key].email === req.body.email);
-    console.log(id)
     resp.cookie('user', id)
     resp.redirect('/urls')
   }
@@ -188,8 +193,9 @@ app.post('/urls', (req,resp) => {
 app.post('/urls/:shortURL', (req, resp) => {
   const id = req.cookies.user
   const url = urlDatabase[req.params.shortURL]
-
+  if (id === url.userID){
   urlDatabase[req.params.shortURL] = { longURL: req.body.longURL, userID: req.cookies.user}
+  }
   resp.redirect(`/urls/${req.params.shortURL}`)
 })
 
@@ -239,6 +245,13 @@ const urlsForUser = (cookie, database) => {
   return matches
 }
 
+const emailMatch = email => {
+  for (var key in users) {
+    if (users[key].email === email) {
+      return users[key].password
+    }
+  }
+}
 
 
 //listens for whatever the PORT is
